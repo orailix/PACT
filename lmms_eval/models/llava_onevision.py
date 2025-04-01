@@ -8,7 +8,7 @@ from datetime import timedelta
 from typing import List, Optional, Tuple, Union
 import os
 import sys
-path_to_llava=os.getenv('path_to_llava', "/lustre/fsn1/projects/rech/fuv/uyb32si/llava_experiment/LLaVA-NeXT")
+path_to_llava="../../LLaVA-NeXT"
 sys.path.append(path_to_llava)
 
 import numpy as np
