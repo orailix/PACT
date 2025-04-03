@@ -1,0 +1,49 @@
+{
+  "os": "Linux-5.15.0-122-generic-x86_64-with-glibc2.35",
+  "python": "CPython 3.12.3",
+  "startedAt": "2025-04-02T07:24:31.215259Z",
+  "args": [
+    "--model=llava_onevision",
+    "--model_args=pretrained=lmms-lab/llava-onevision-qwen2-7b-ov,device_map=auto,conv_template=qwen_1_5",
+    "--tasks=mmmu_val",
+    "--batch_size=1",
+    "--log_samples",
+    "--log_samples_suffix=llava_one_7b_mmmu_val_0.21_0.55",
+    "--output_path=./logs_pact/",
+    "--wandb_args=project=lmms-eval,job_type=eval,entity=llava-vl"
+  ],
+  "program": "-m lmms_eval.__main__",
+  "git": {
+    "remote": "https://github.com/orailix/PACT.git",
+    "commit": "bbf748af24f874d3891d71c7f6be20bdf8fb48be"
+  },
+  "root": "/workspace/PACT/lmms_eval",
+  "host": "job-037d6b25-c603-4e2f-afa7-10d0612c0862",
+  "executable": "/workspace/.miniconda3/envs/pact/bin/python",
+  "cpu_count": 60,
+  "cpu_count_logical": 60,
+  "gpu": "Tesla V100S-PCIE-32GB",
+  "gpu_count": 1,
+  "disk": {
+    "/": {
+      "total": "3779044696064",
+      "used": "1555040739328"
+    }
+  },
+  "memory": {
+    "total": "185454395392"
+  },
+  "cpu": {
+    "count": 60,
+    "countLogical": 60
+  },
+  "gpu_nvidia": [
+    {
+      "name": "Tesla V100S-PCIE-32GB",
+      "memoryTotal": "34359738368",
+      "cudaCores": 5120,
+      "architecture": "Volta"
+    }
+  ],
+  "cudaVersion": "12.4"
+}

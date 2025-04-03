@@ -8,7 +8,7 @@ from datetime import timedelta
 from typing import List, Optional, Tuple, Union
 import os
 import sys
-path_to_llava="../../LLaVA-NeXT"
+path_to_llava="../LLaVA-NeXT"
 sys.path.append(path_to_llava)
 
 import numpy as np
@@ -38,24 +38,21 @@ eval_logger = logging.getLogger("lmms-eval")
 torch.backends.cuda.matmul.allow_tf32 = True
 
 # Import LLaVA modules
-try:
-    from llava.constants import (
-        DEFAULT_IM_END_TOKEN,
-        DEFAULT_IM_START_TOKEN,
-        DEFAULT_IMAGE_TOKEN,
-        IGNORE_INDEX,
-        IMAGE_TOKEN_INDEX,
-    )
-    from llava.conversation import SeparatorStyle, conv_templates
-    from llava.mm_utils import (
-        KeywordsStoppingCriteria,
-        get_model_name_from_path,
-        process_images,
-        tokenizer_image_token,
-    )
-    from llava.model.builder import load_pretrained_model
-except ImportError as e:
-    eval_logger.debug(f"LLaVA is not installed. Please install LLaVA to use this model.\nError: {e}")
+from llava.constants import (
+    DEFAULT_IM_END_TOKEN,
+    DEFAULT_IM_START_TOKEN,
+    DEFAULT_IMAGE_TOKEN,
+    IGNORE_INDEX,
+    IMAGE_TOKEN_INDEX,
+)
+from llava.conversation import SeparatorStyle, conv_templates
+from llava.mm_utils import (
+    KeywordsStoppingCriteria,
+    get_model_name_from_path,
+    process_images,
+    tokenizer_image_token,
+)
+from llava.model.builder import load_pretrained_model
 
 
 # Determine best attention implementation
