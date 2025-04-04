@@ -8,7 +8,11 @@ from datetime import timedelta
 from typing import List, Optional, Tuple, Union
 import os
 import sys
-path_to_llava="../LLaVA-NeXT"
+from pathlib import Path
+
+file_path = Path(__file__).resolve()
+two_dirs_up = file_path.parent.parent.parent
+path_to_llava=f"{two_dirs_up}/LLaVA-NeXT"
 sys.path.append(path_to_llava)
 
 import numpy as np
