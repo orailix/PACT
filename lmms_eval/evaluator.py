@@ -48,106 +48,95 @@ from lmms_eval.utils import (
 from rich import print as rich_print
 from rich.table import Table
 from rich.console import Console
-from rich.box import SQUARE  # ✅ Import SQUARE properly
+from rich.box import SQUARE
 from types import SimpleNamespace
+from transformers.PACT.utils_pruning import load_config
+import pytz
+import datetime
+def print_visual_token_metrics(lm, end_max_mem, print_as_table=True):
+    console = Console()
 
+    rich_print("\n[bold black]📊 Visual Token Reduction Metrics[/bold black]\n")
 
-def load_config(config_path=None):
-    if config_path is None:
-        config_path = os.getenv('pact_config_path', None)
-    
-    # Default values
-    default_config = {
-        "visual_token_reduction": False,
-        "layer_for_reduction": 4,
-        "progessive_reduction": False,
-        "use_DBDPC": False,
-        "cutoff": 0.0,
-        "vector_to_use_in_distance_clustering": "current_k_cosine",
-        "take_mean": True,
-        "include_pruned_in_mean": True,
-        "coef_pruned": 1.5,
-        "avoid_numerical_instability_DBDPC": True,
-        "withdraw_visual_tokens": False,
-        "use_tome": False,
-        "perc_tokeep_tome_total": 1.0,
-        "tome_equivalant_layer_for_reduction" : 4,
-        "use_kmeans": False,
-        "perc_tokeep_kmeans": 1.0,
-        "use_dpc": False,
-        "equivalent_reduc_percentage_vtw" :0.0,
-        "percentage_to_keep_dpc": 1.0,
-        "use_agglomerative": False,
-        "percentage_to_keep_agglomerative": 1.0,
-        "linkage": "single",
-        "use_dbscan": False,
-        "eps_dbscan": 0.1,
-        "noise_as_clusters_dbscan": False,
-        "token_pruning": False,
-        "use_all_non_text_pruning": True,
-        "prune_with_norm": False,
-        "use_cosine_in_token_pruning": True,
-        "use_attention_in_token_pruning": False,
-        "use_mask_in_use_attention_in_token_pruning": False,
-        "use_IQR_in_token_pruning": False,
-        "alpha_IQR": 0.5,
-        "pruning_filter_wth_percentage": True,
-        "pruning_tokeep_percentage_value": 1.0,
-        "multiply_by_norm": False,
-        "norm_to_use": 2,
-        "avoid_numerical_instability_prune": True,
-        "no_proportional_attention": False,
-        "change_position_ids": False,
-        "get_mean_position_id": False,
-        "synchro": False,
-        "need_kq": True,
-        "keep_casual": True,
-        "get_performance_metrics": False,
-        "get_reduction_ratio": False,
-        "use_custom_merging": False,
-        "use_custom_pruning": False,
-    }
+    # Dictionary to store metric values
+    metrics = {}
+    if not pact_config.progessive_reduction :
+        try:
+            metrics["🔹 Reduction Ratio"] = 1 - (lm.model.model.reduction[1] / lm.model.model.reduction[0])
+        except:
+            pass
 
-    # Load configuration file if it exists
-    if config_path is not None and os.path.exists(config_path):
-        with open(config_path, 'r') as f:
-            config_file = json.load(f)
-    else:
-        config_file = {}
+    try:
+        metrics["🔹 Reduction Mean Across Layers"] = 1 - (
+            lm.model.model.mean_visual_tokens_all[0] / lm.model.model.mean_visual_tokens_all[1]
+        )
+    except:
+        pass
 
-    # Merge defaults with file config
-    config = default_config.copy()
-    config.update(config_file)
+    try:
+        metrics["⏳ Algorithm Execution Time"] = lm.model.model.total_algo_time / lm.model.model.total_el
+    except:
+        pass
 
-    # Override with any matching environment variables
-    for key in config:
-        env_val = os.getenv(key)
-        if env_val is not None:
-            default_type = type(default_config[key])
-            # try:
-                # Convert string env var to the type of the default
-            if default_type == bool:
-                config[key] = env_val.lower() in ("true", "1", "yes")
+    try:
+        metrics["⚡ LLM Generation Mean Time"] = lm.model.total_time[0] / lm.model.total_time[1]
+    except:
+        pass
+
+    metrics["🖥️ Peak Memory Allocated (GB)"] = end_max_mem/ (1024 ** 3)
+
+    if print_as_table:
+        table = Table(
+            title="[bold black]Visual Token Reduction Performance[/bold black]",
+            border_style="bold black",
+            header_style="bold black",
+            box=SQUARE,  
+            show_lines=True
+        )
+
+        table.add_column("Metric", style="bold black", justify="left", no_wrap=True)
+        table.add_column("Value", justify="right", style="bold black")
+
+        for key, value in metrics.items():
+            if isinstance(value, float):
+                formatted_value = f"{value:,.4f}"
+            elif isinstance(value, int):
+                formatted_value = f"{value:,}"
             else:
-                config[key] = default_type(env_val)
-            print(f"overwriting {key} with {env_val}")
-            # except Exception:
-            #     print(f"Warning: could not cast environment variable {key} to {default_type}, using default.")
+                formatted_value = str(value)
 
-    # Apply internal logic
-    if config["synchro"]:
-        config["get_performance_metrics"] = True
-    if config["get_performance_metrics"]:
-        config["synchro"] = True
-    if config["use_tome"]:
-        config["progessive_reduction"] = True
-        config["layer_for_reduction"] = 0
+            table.add_row(key, formatted_value)
 
-    return SimpleNamespace(**config)
+        console.print(table)
+        return metrics
 
-# Example usage
+    else:
+        for key, value in metrics.items():
+            if isinstance(value, float):
+                formatted_value = f"{value:,.4f}"
+            elif isinstance(value, int):
+                formatted_value = f"{value:,}"
+            else:
+                formatted_value = str(value)
+
+            print(f"{key:<35} {formatted_value}")
+        
+        return metrics
+
+def get_datetime_str(timezone="Asia/Singapore"):
+    """
+    Gets the current datetime in UTC+8 timezone as a string.
+    """
+    # Default: UTC+8 timezone
+    tz = pytz.timezone(timezone)
+    utc_now = datetime.datetime.now(datetime.timezone.utc)
+    local_time = utc_now.astimezone(tz)
+    return local_time.strftime("%Y%m%d_%H%M%S")
+    return local_time.strftime("%Y%m%d_%H%M%S")
+    
+
 pact_config = load_config()
-print(pact_config)
+
 @positional_deprecated
 def simple_evaluate(
     model,
@@ -356,11 +345,8 @@ def simple_evaluate(
         fewshot_as_multiturn=fewshot_as_multiturn,
         verbosity=verbosity,
         cli_args=cli_args,
+        
     )
-
-    if hasattr(lm, "_model"):
-        del lm._model
-        torch.cuda.empty_cache()
 
     if lm.rank == 0:
         if isinstance(model, str):
@@ -375,10 +361,23 @@ def simple_evaluate(
             "model": model_name,
             "model_args": model_args,
         }
-        # add more detailed model info if available TODO: add model info
-        # if isinstance(lm, lm_eval.models.huggingface.HFLM):
-        #     results["config"].update(lm.get_model_info())
-        # add info about execution
+  
+
+        ### added block for reduction metrics
+        # breakpoint()
+        end_max_mem = torch.cuda.max_memory_allocated()  # Peak memory at the end
+        reduction_metrics=print_visual_token_metrics(lm, end_max_mem)
+        cleaned_data = {ok: {k.replace(',none', ''): v for k, v in id.items() if v not in (None, [], {},'N/A','n/a')} for ok, id in results["results"].items()}
+        datetime_str = get_datetime_str()
+        key_str = "_".join(cleaned_data.keys())
+        os.makedirs(pact_config.log_output_path,exist_ok=True)
+        filename = os.path.join(pact_config.log_output_path, f"{datetime_str}_{key_str}.json")
+        combined_data = {"reduction_metrics": dict(reduction_metrics),"results": cleaned_data,"model": model_name,"model_args": model_args,"pact_config" :vars(pact_config),}
+        with open(filename, "w") as f: 
+            json.dump(combined_data, f, indent=2)
+    
+        ####
+        
         results["config"].update(
             {
                 "batch_size": batch_size,
@@ -398,8 +397,14 @@ def simple_evaluate(
         results["date"] = datetime_str
         # add_env_info(results)  # additional environment info to results
         # add_tokenizer_info(results, lm)  # additional info about tokenizer
+        if hasattr(lm, "_model"):
+            del lm._model
+            torch.cuda.empty_cache()
         return results
     else:
+        if hasattr(lm, "_model"):
+            del lm._model
+            torch.cuda.empty_cache()
         return None
 
 
@@ -726,85 +731,6 @@ def evaluate(
 
     if hasattr(lm, "accelerator"):
         lm.accelerator.wait_for_everyone()
-
-    end_max_mem = torch.cuda.max_memory_allocated()  # Peak memory at the end
-
-    # import pdb
-    # pdb.set_trace()
-
-
-
-    def print_visual_token_metrics(lm, end_max_mem, print_as_table=True):
-        console = Console()
-
-        rich_print("\n[bold black]📊 Visual Token Reduction Metrics[/bold black]\n")
-
-        # Dictionary to store metric values
-        metrics = {}
-        if not pact_config.progessive_reduction :
-            try:
-                metrics["🔹 Reduction Ratio"] = lm.model.model.reduction[1] / lm.model.model.reduction[0]
-            except:
-                pass
-
-        try:
-            metrics["🔹 Reduction Mean Across Layers"] = (
-                lm.model.model.mean_visual_tokens_all[0] / lm.model.model.mean_visual_tokens_all[1]
-            )
-        except:
-            pass
-
-        try:
-            metrics["⏳ Algorithm Execution Time"] = lm.model.model.total_algo_time / lm.model.model.total_el
-        except:
-            pass
-
-        try:
-            metrics["⚡ LLM Generation Mean Time"] = lm.model.total_time[0] / lm.model.total_time[1]
-        except:
-            pass
-
-        metrics["🖥️ Peak Memory Allocated"] = end_max_mem
-
-        # ✅ Use correct Box format
-        if print_as_table:
-            table = Table(
-                title="[bold black]Visual Token Reduction Performance[/bold black]",
-                border_style="bold black",
-                header_style="bold black",
-                box=SQUARE,  # ✅ Correctly using a Box object
-                show_lines=True
-            )
-
-            table.add_column("Metric", style="bold black", justify="left", no_wrap=True)
-            table.add_column("Value", justify="right", style="bold black")
-
-            for key, value in metrics.items():
-                if isinstance(value, float):
-                    formatted_value = f"{value:,.4f}"
-                elif isinstance(value, int):
-                    formatted_value = f"{value:,}"
-                else:
-                    formatted_value = str(value)
-
-                table.add_row(key, formatted_value)
-
-            console.print(table)
-
-        else:
-            for key, value in metrics.items():
-                if isinstance(value, float):
-                    formatted_value = f"{value:,.4f}"
-                elif isinstance(value, int):
-                    formatted_value = f"{value:,}"
-                else:
-                    formatted_value = str(value)
-
-                print(f"{key:<35} {formatted_value}")
-
-
-    print_visual_token_metrics(lm, end_max_mem)
-    print_visual_token_metrics(lm, end_max_mem,print_as_table=False)
 
     return results_dict
 

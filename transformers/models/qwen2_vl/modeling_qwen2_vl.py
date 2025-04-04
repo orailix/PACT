@@ -59,23 +59,16 @@ if is_flash_attn_2_available():
 else:
     flash_attn_varlen_func = None
 
+import os
+import json
+from ...PACT.utils_pruning import custom_token_reduction, custom_pruning, token_reduction, token_reduction_tome, token_reduction_kmeans, token_reduction_dpc, token_reduction_agglomerative, token_reduction_dbscan
+import time
 
 logger = logging.get_logger(__name__)
 
 _CONFIG_FOR_DOC = "Qwen2VLConfig"
 NUMBER_OF_LAYERS=28
 
-
-import os
-import math
-import sys
-import json
-from ..PACT.utils_pruning import custom_token_reduction,custom_pruning,token_reduction,token_reduction_tome, token_reduction_kmeans,token_reduction_dpc,token_reduction_agglomerative,token_reduction_dbscan
-import numpy as np
-import time
-import os 
-import matplotlib.pyplot as plt
-from types import SimpleNamespace
 
 logger = logging.get_logger(__name__)
 
@@ -86,165 +79,31 @@ _CONFIG_FOR_DOC = "Qwen2Config"
 torch.set_printoptions(threshold=float('inf'))
 
       
-def load_config(config_path=None):
-    if config_path is None:
-        config_path = os.getenv('pact_config_path', None)
-    
-    # Default values
-    default_config = {
-        "visual_token_reduction": False,
-        "layer_for_reduction": 4,
-        "progessive_reduction": False,
-        "use_DBDPC": False,
-        "cutoff": 0.0,
-        "vector_to_use_in_distance_clustering": "current_k_cosine",
-        "take_mean": True,
-        "include_pruned_in_mean": True,
-        "do_not_consider_non_image_tokens_as_pruned": True,
-        "coef_pruned": 1.5,
-        "avoid_numerical_instability_DBDPC": True,
-        "withdraw_visual_tokens": False,
-        "VTW_equivalant_layer_for_reduction" : -1,
-        "equivalent_reduc_percentage_vtw" : 0.0,
-        "use_tome": False,
-        "perc_tokeep_tome_total": 1.0,
-        "tome_equivalant_layer_for_reduction" : 4,
-        "use_kmeans": False,
-        "perc_tokeep_kmeans": 1.0,
-        "use_dpc": False,
-        "percentage_to_keep_dpc": 1.0,
-        "use_agglomerative": False,
-        "percentage_to_keep_agglomerative": 1.0,
-        "linkage": "single",
-        "use_dbscan": False,
-        "eps_dbscan": 0.1,
-        "noise_as_clusters_dbscan": False,
-        "token_pruning": False,
-        "use_all_non_text_pruning": True,
-        "prune_with_norm": False,
-        "use_cosine_in_token_pruning": True,
-        "use_attention_in_token_pruning": False,
-        "use_mask_in_use_attention_in_token_pruning": False,
-        "use_IQR_in_token_pruning": False,
-        "alpha_IQR": 0.5,
-        "pruning_filter_wth_percentage": True,
-        "pruning_tokeep_percentage_value": 1.0,
-        "multiply_by_norm": False,
-        "norm_to_use": 2,
-        "avoid_numerical_instability_prune": True,
-        "no_proportional_attention": False,
-        "change_position_ids": False,
-        "get_mean_position_id": False,
-        "synchro": False,
-        "need_kq": True,
-        "do_not_upcast_to_full_precision_for_pruning" :False,
-        "keep_casual": True,
-        "get_performance_metrics": False,
-        "get_reduction_ratio": False,
-        "use_custom_merging": False,
-        "use_custom_pruning": False,
-    }
-
-
-    # Load configuration file if it exists
-    if config_path is not None and os.path.exists(config_path):
-        with open(config_path, 'r') as f:
-            config_file = json.load(f)
-    else:
-        config_file = {}
-
-    # Merge defaults with file config
-    config = default_config.copy()
-    config.update(config_file)
-
-    # Override with any matching environment variables
-    for key in config:
-        env_val = os.getenv(key)
-        if env_val is not None:
-            default_type = type(default_config[key])
-            # try:
-            # Convert string env var to the type of the default
-            if default_type == bool:
-                config[key] = env_val.lower() in ("true", "1", "yes")
-            else:
-                config[key] = default_type(env_val)
-            # except Exception:
-            #     print(f"Warning: could not cast environment variable {key} to {default_type}, using default.")
-
-    # Apply internal logic
-    if config["synchro"]:
-        config["get_performance_metrics"] = True
-    if config["get_performance_metrics"]:
-        config["synchro"] = True
-    if config["use_tome"]:
-        config["progessive_reduction"] = True
-        config["layer_for_reduction"] = 0
-
-     # --- Mutual Exclusivity Checks ---
-
-    # 1. Only one of these reduction methods can be active
-    exclusive_methods_1 = [
-        "use_DBDPC", "use_tome", "use_kmeans",
-        "use_dpc", "use_agglomerative", "use_dbscan"
-    ]
-    active_methods_1 = [key for key in exclusive_methods_1 if config.get(key)]
-    if len(active_methods_1) > 1:
-        raise ValueError(
-            f"Only one of the following can be true at a time: {', '.join(exclusive_methods_1)}. "
-            f"Currently enabled: {', '.join(active_methods_1)}"
-        )
-
-    # 2. Only one of these pruning methods can be active
-    exclusive_methods_2 = [
-        "prune_with_norm", "token_pruning", "withdraw_visual_tokens"
-    ]
-    active_methods_2 = [key for key in exclusive_methods_2 if config.get(key)]
-    if len(active_methods_2) > 1:
-        raise ValueError(
-            f"Only one of the following can be true at a time: {', '.join(exclusive_methods_2)}. "
-            f"Currently enabled: {', '.join(active_methods_2)}"
-        )
-
-    # 3. If token_pruning is true, exactly one of use_IQR_in_token_pruning or pruning_filter_wth_percentage must be true
-    if config.get("token_pruning"):
-        pruning_options = [
-            config.get("use_IQR_in_token_pruning", False),
-            config.get("pruning_filter_wth_percentage", False)
-        ]
-        if pruning_options.count(True) != 1:
-            raise ValueError(
-                "When 'token_pruning' is enabled, exactly one of "
-                "'use_IQR_in_token_pruning' or 'pruning_filter_wth_percentage' must be set to True."
-            )
-
-    return SimpleNamespace(**config)
-
-# Example usage
 pact_config = load_config()
-print(pact_config)
-def  get_key_query_value(hidden_states,decoder_layer,real_position_ids,position_embeddings,get_only_k=False) :
 
-            hidden_states_normalized= decoder_layer.input_layernorm(hidden_states)
-            current_k=decoder_layer.self_attn.k_proj(hidden_states_normalized) 
-            bsz, q_len, _ = current_k.size()
-            current_k_cosine = current_k.view(bsz, q_len, decoder_layer.self_attn.num_key_value_heads, decoder_layer.self_attn.head_dim).transpose(1, 2)
-            cos, sin = position_embeddings
-            if get_only_k :
-                current_k_cosine, _=apply_multimodal_rotary_pos_emb(
-            current_k_cosine, current_k_cosine, cos, sin, decoder_layer.self_attn.rope_scaling["mrope_section"]
-        )
-                current_k_cosine=current_k_cosine.transpose(1, 2).flatten(2,3)
-                return current_k,current_k_cosine
+def  get_key_query_value(hidden_states, decoder_layer, real_position_ids, position_embeddings, get_only_k=False) :
 
-            current_q=decoder_layer.self_attn.q_proj(hidden_states_normalized) 
-            current_q_cosine = current_q.view(bsz, q_len, decoder_layer.self_attn.num_heads, decoder_layer.self_attn.head_dim).transpose(1, 2)  
-            current_k_cosine, current_q_cosine = apply_multimodal_rotary_pos_emb(
-            current_k_cosine, current_q_cosine, cos, sin, decoder_layer.self_attn.rope_scaling["mrope_section"]
-        )
-            current_k_cosine=current_k_cosine.transpose(1, 2).flatten(2,3)
-            current_q_cosine=current_q_cosine.transpose(1, 2).flatten(2,3)
+    hidden_states_normalized= decoder_layer.input_layernorm(hidden_states)
+    current_k=decoder_layer.self_attn.k_proj(hidden_states_normalized) 
+    bsz, q_len, _ = current_k.size()
+    current_k_cosine = current_k.view(bsz, q_len, decoder_layer.self_attn.num_key_value_heads, decoder_layer.self_attn.head_dim).transpose(1, 2)
+    cos, sin = position_embeddings
+    if get_only_k :
+        current_k_cosine, _=apply_multimodal_rotary_pos_emb(
+    current_k_cosine, current_k_cosine, cos, sin, decoder_layer.self_attn.rope_scaling["mrope_section"]
+)
+        current_k_cosine=current_k_cosine.transpose(1, 2).flatten(2,3)
+        return current_k,current_k_cosine
 
-            return current_k,current_q,current_k_cosine,current_q_cosine 
+    current_q=decoder_layer.self_attn.q_proj(hidden_states_normalized) 
+    current_q_cosine = current_q.view(bsz, q_len, decoder_layer.self_attn.num_heads, decoder_layer.self_attn.head_dim).transpose(1, 2)  
+    current_k_cosine, current_q_cosine = apply_multimodal_rotary_pos_emb(
+    current_k_cosine, current_q_cosine, cos, sin, decoder_layer.self_attn.rope_scaling["mrope_section"]
+)
+    current_k_cosine=current_k_cosine.transpose(1, 2).flatten(2,3)
+    current_q_cosine=current_q_cosine.transpose(1, 2).flatten(2,3)
+
+    return current_k, current_q, current_k_cosine, current_q_cosine 
 
             
 
@@ -1364,9 +1223,6 @@ class Qwen2VLModel(Qwen2VLPreTrainedModel):
         all_self_attns = () if output_attentions else None
         next_decoder_cache = None
 
-        
-
-            
         weights_forward=None
         for index,decoder_layer in enumerate(self.layers):
             
@@ -1386,33 +1242,6 @@ class Qwen2VLModel(Qwen2VLPreTrainedModel):
                     position_embeddings,
                 )
             else:
-
-                # if image_in_input :
-
-                #     is_image=position_ids[3:,:,:].bool().squeeze()
-
-                #     current_k,current_q,current_k_cosine,current_q_cosine=get_key_query_value(hidden_states,decoder_layer,real_position_ids,position_embeddings=position_embeddings)
-
-                #     current_k=current_k.squeeze()[is_image]
-                #     print(f"current_k shape is {current_k.shape}")
-
-                #     normalized_k = torch.nn.functional.normalize(current_k, dim=1)
-
-                #     cosine_similarity = torch.mm(normalized_k, normalized_k.T)
-        
-                #     # Convert to cosine distance (1 - cosine similarity)
-                #     cosine_distance = 1 - cosine_similarity
-
-                #     max_distance_keys = torch.max(cosine_distance).item()
-
-                #     self.key_dist_stats[index][1]+=1
-                #     self.key_dist_stats[index][0]+=max_distance_keys
-
-                #     for key,value in self.key_dist_stats.items() :
-                #         try :
-                #             print(f" for layer {key} max distance is{value[0]/value[1]}")
-                #         except :
-                #             pass
 
                 if pact_config.visual_token_reduction :
                     is_reduction_layer_or_after=index>=pact_config.layer_for_reduction
@@ -1446,18 +1275,14 @@ class Qwen2VLModel(Qwen2VLPreTrainedModel):
                                 self.mean_visual_tokens_all[1]+=len(self.layers)*is_image.sum().item()
                             self.total_el+=1
                             
-                        
                         if not hasattr(self, 'reduction') :
                             self.reduction=[0,0]
-
 
                         if  pact_config.need_kq :
                             current_k,current_q,current_k_cosine,current_q_cosine=get_key_query_value(hidden_states,decoder_layer,real_position_ids,position_embeddings=position_embeddings)
                             # vector_to_use_in_distance_clustering = str(os.getenv('vector_to_use_in_distance_clustering', 'current_k_cosine'))
                             vector_to_use_in_distance_clustering=eval(pact_config.vector_to_use_in_distance_clustering)
 
-
-                    
                         if pact_config.token_pruning :
                           
                             if pact_config.use_cosine_in_token_pruning :
@@ -1493,10 +1318,7 @@ class Qwen2VLModel(Qwen2VLPreTrainedModel):
                                     if not pact_config.use_all_non_text_pruning :
                                         causal_mask_att_calculation=causal_mask_att_calculation[:,is_image[is_not_text]]
                                     scores = scores.masked_fill(causal_mask_att_calculation, float('-inf'))
-                                    
-                        
-                                
-                                
+
                                 scores=torch.softmax(scores,dim=-1,dtype=torch.float32).mean(1) #*scores.shape[-1]
 
                                 scores = torch.nan_to_num(scores, nan=0.0)
@@ -1504,10 +1326,7 @@ class Qwen2VLModel(Qwen2VLPreTrainedModel):
                                     scores=scores.mean(-2)
                                 else :    
                                     scores=scores.squeeze(-2)
-                                
-                                
                                 if pact_config.use_all_non_text_pruning :
-                                    
                                     scores=scores[:,is_image[is_not_text]]
                             
                                 if pact_config.multiply_by_norm :
@@ -1537,7 +1356,6 @@ class Qwen2VLModel(Qwen2VLPreTrainedModel):
 
                             first_mask = (scores >= thresh_scores).squeeze().bool()
                                                             
-                                               
                         elif pact_config.prune_with_norm :
                             norm=torch.norm(hidden_states[:,is_image].to(torch.float32), dim=-1,p=2).squeeze()
                             scores= norm.squeeze()
@@ -1646,9 +1464,6 @@ class Qwen2VLModel(Qwen2VLPreTrainedModel):
                                 weights=self.weights[index-1].squeeze()[first_mask_global]
                             if pact_config.synchro or pact_config.get_reduction_ratio:
                                 self.reduction[1]+=second_mask.sum().item()
-                        
-
-                        
 
                         weights_final=torch.ones_like(is_image).to(torch.float16)
                         weights_final[first_mask_global]=weights.to(torch.float16)
@@ -1675,9 +1490,7 @@ class Qwen2VLModel(Qwen2VLPreTrainedModel):
                             self.weights[index]=weights
                         else :
                             self.weights=weights
-                        
-                        
-                        
+
                         weights_forward=weights
 
                         seq_len = real_position_ids.shape[2]
@@ -1701,16 +1514,8 @@ class Qwen2VLModel(Qwen2VLPreTrainedModel):
                         
                         weights_forward=weights_forward.to(hidden_states.dtype).unsqueeze(0).unsqueeze(0)
 
-                        
-
-
-
-                
-
                 if pact_config.visual_token_reduction and pact_config.synchro and image_in_input:
                     self.mean_visual_tokens_all[0]+=position_ids[3:,:,:].bool().squeeze().sum().item()
-  
-                  
 
                 if weights_forward is not None and pact_config.no_proportional_attention :
                     weights_forward=None
@@ -2307,8 +2112,6 @@ class Qwen2VLForConditionalGeneration(Qwen2VLPreTrainedModel, GenerationMixin):
         if torch.any(visual_mask):
             position_ids=torch.cat((position_ids,visual_mask),dim=0)
 
-
-        import time
         torch.cuda.synchronize()
         start=time.time()
 

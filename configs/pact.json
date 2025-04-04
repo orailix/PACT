@@ -1,0 +1,24 @@
+{
+    "visual_token_reduction": true,
+    "layer_for_reduction": 4,
+    "use_DBDPC": true,
+    "cutoff": 0.21,
+    "vector_to_use_in_distance_clustering": "current_k_cosine",
+    "take_mean": true,
+    "include_pruned_in_mean": true,
+    "coef_pruned": 1.5,
+    "token_pruning": true,
+    "use_cosine_in_token_pruning": false,
+    "use_attention_in_token_pruning": false,
+    "use_mask_in_use_attention_in_token_pruning": false,
+    "pruning_filter_wth_percentage": true,
+    "pruning_tokeep_percentage_value": 0.55,
+    "multiply_by_norm": true,
+    "norm_to_use": 2,
+    "synchro": false,
+    "keep_casual": true,
+    "get_performance_metrics": false,
+    "get_reduction_ratio": true,
+    "log_output_path": "agg_pact_logs"
+  
+}

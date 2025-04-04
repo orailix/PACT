@@ -77,7 +77,6 @@ dependencies:
       - et-xmlfile
       - exceptiongroup
       - fastapi-cli
-      - flash-attn
       - ftfy
       - hf-transfer
       - httptools

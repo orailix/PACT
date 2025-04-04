@@ -1,0 +1,12 @@
+{
+    "visual_token_reduction": true,
+    "layer_for_reduction": 4,
+    "use_DBDPC": false,
+    "token_pruning": false,
+    "use_agglomerative": true,
+    "percentage_to_keep_agglomerative": 0.0,
+     "linkage": "single",
+    "keep_casual": true,
+    "get_performance_metrics": false,
+    "get_reduction_ratio": true
+}

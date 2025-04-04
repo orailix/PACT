@@ -1,0 +1,12 @@
+{
+    "visual_token_reduction": true,
+    "layer_for_reduction": 4,
+    "use_DBDPC": false,
+    "token_pruning": false,
+    "use_kmeans": true,
+    "perc_tokeep_kmeans": 0.5,
+    "synchro": true,
+    "keep_casual": true,
+    "get_performance_metrics": false,
+    "get_reduction_ratio": true
+}
