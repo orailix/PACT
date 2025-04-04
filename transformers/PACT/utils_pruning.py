@@ -53,7 +53,7 @@ def load_config(config_path=None):
         "token_pruning": False,
         "use_all_non_text_pruning": True,
         "prune_with_norm": False,
-        "use_cosine_in_token_pruning": True,
+        "use_cosine_in_token_pruning": False,
         "use_attention_in_token_pruning": False,
         "use_mask_in_use_attention_in_token_pruning": False,
         "use_IQR_in_token_pruning": False,
@@ -74,7 +74,7 @@ def load_config(config_path=None):
         "get_reduction_ratio": False,
         "use_custom_merging": False,
         "use_custom_pruning": False,
-        "log_output_path" : "aggregated_metrics",
+        "log_output_path": "aggregated_metrics",
     }
 
 
@@ -93,15 +93,13 @@ def load_config(config_path=None):
     for key in config:
         env_val = os.getenv(key)
         if env_val is not None:
-                default_type = type(default_config[key])
-            # try:
-                # Convert string env var to the type of the default
-                if default_type == bool:
-                    config[key] = env_val.lower() in ("true", "1", "yes")
-                else:
-                    config[key] = default_type(env_val)
-            # except Exception:
-            #     print(f"Warning: could not cast environment variable {key} to {default_type}, using default.")
+            default_type = type(default_config[key])
+            if default_type == bool:
+                config[key] = env_val.lower() in ("true", "1", "yes")   
+            else:
+                config[key] = default_type(env_val)
+            print(f"Overwriting {key} with {config[key]}")
+            
 
     # Apply internal logic
     if config["synchro"]:

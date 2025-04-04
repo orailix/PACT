@@ -52,16 +52,13 @@ from ...utils import (
 from .configuration_qwen2_vl import Qwen2VLConfig, Qwen2VLVisionConfig
 
 
-if is_flash_attn_2_available():
-    from flash_attn import flash_attn_varlen_func
+from flash_attn import flash_attn_varlen_func
+from ...modeling_flash_attention_utils import _flash_attention_forward
 
-    from ...modeling_flash_attention_utils import _flash_attention_forward
-else:
-    flash_attn_varlen_func = None
 
 import os
 import json
-from ...PACT.utils_pruning import custom_token_reduction, custom_pruning, token_reduction, token_reduction_tome, token_reduction_kmeans, token_reduction_dpc, token_reduction_agglomerative, token_reduction_dbscan
+from ...PACT.utils_pruning import custom_token_reduction, custom_pruning, token_reduction, token_reduction_tome, token_reduction_kmeans, token_reduction_dpc, token_reduction_agglomerative, token_reduction_dbscan, load_config
 import time
 
 logger = logging.get_logger(__name__)
