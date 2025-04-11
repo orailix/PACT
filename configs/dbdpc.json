@@ -1,0 +1,14 @@
+{
+    "visual_token_reduction": true,
+    "layer_for_reduction": 4,
+    "use_DBDPC": true,
+    "cutoff": 0.21,
+    "vector_to_use_in_distance_clustering": "current_k_cosine",
+    "take_mean": true,
+    "include_pruned_in_mean": false,
+    "token_pruning": false,
+    "keep_casual": true,
+    "get_performance_metrics": false,
+    "get_reduction_ratio": true
+  
+}

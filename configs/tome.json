@@ -1,0 +1,13 @@
+{
+    "visual_token_reduction": true,
+    "layer_for_reduction": 0,
+    "tome_equivalant_layer_for_reduction" :4,
+    "use_DBDPC": false,
+    "token_pruning": false,
+    "use_tome": true,
+    "perc_tokeep_tome_total": 0.0,
+    "synchro": true,
+    "keep_casual": true,
+    "get_performance_metrics": false,
+    "get_reduction_ratio": true
+}

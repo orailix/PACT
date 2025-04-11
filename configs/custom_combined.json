@@ -1,0 +1,16 @@
+{
+    "visual_token_reduction": true,
+    "layer_for_reduction": 4,
+    "use_DBDPC": false,
+    "cutoff": 0.21,
+    "vector_to_use_in_distance_clustering": "current_k_cosine",
+    "use_custom_merging" : true,
+    "token_pruning": true,
+    "use_cosine_in_token_pruning": true,
+    "use_custom_pruning": true,
+    "pruning_filter_wth_percentage": true,
+    "pruning_tokeep_percentage_value": 0.5,
+    "keep_casual": true,
+    "get_performance_metrics": false,
+    "get_reduction_ratio": true
+}
