@@ -1,6 +1,6 @@
 # PACT: Pruning and Clustering-Based Token Reduction for Faster Visual Language Models, CVPR 2025
 
-[![arXiv](https://img.shields.io/badge/arXiv-1234.56789-b31b1b.svg)](linkcomingsoon)
+[![arXiv](https://img.shields.io/badge/arXiv-1234.56789-b31b1b.svg)](https://arxiv.org/abs/2504.08966)
 
 ## PACT Performance
 
@@ -55,11 +55,33 @@ You can also test a custom pruning or clustering-based reduction method or combi
 - [custom_pruning.json](configs/custom_pruning.json) for custom pruning methods
 - [custom_combined.json](configs/custom_combined.json) for combinig both pruning and clustering-based merging.
 
-In addition to using the correct config file, you need to implement your reduction logic by modifying the `custom_pruning` function (which computes scores for token pruning) and the `custom_token_reduction` function (which typically defines a clustering-then-merging method) in [utils.py](transformers/PACT/utils.py). Please refer to the documentation of these functions for more details.
+In addition to using the correct config file, you need to implement your reduction logic by modifying the `custom_pruning` function (which computes scores for token pruning) or/and the `custom_token_reduction` function (which typically defines a clustering-then-merging method) in [utils.py](transformers/PACT/utils.py). Please refer to the documentation of these functions for more details. Once implemented, you can easily test your custom pruning methods, your custom clustering-based reduction methods, or even combine both by running:
+
+```bash
+cd PACT/scripts
+bash test_custom.sh
+```
 
 ## Implementation Details
 
-The visual token reduction is implemented by modifying [`llava_arch.py`](LLaVA-NeXT/llava/model/llava_arch.py) and [`modeling_qwen2.py`](transformers/models/qwen2/modeling_qwen2.py) for LLaVA-OneVision, and [`modeling_qwen2_vl.py`](transformers/models/qwen2_vl/modeling_qwen2_vl.py) for Qwen-VL 2.0. These files rely on functions defined in [`utils.py`](transformers/PACT/utils.py).
+The visual token reduction is implemented by modifying [`llava_arch.py`](LLaVA-NeXT/llava/model/llava_arch.py) and [`modeling_qwen2.py`](transformers/models/qwen2/modeling_qwen2.py) for LLaVA-OneVision, and [`modeling_qwen2_vl.py`](transformers/models/qwen2_vl/modeling_qwen2_vl.py) for Qwen-VL 2.0. The modifications are based on functions defined in [`utils.py`](transformers/PACT/utils.py).
 
 
 ## Citation
+
+If you find our work useful, please consider citing our paper:
+
+@misc{dhouib2025pactpruningclusteringbasedtoken,
+      title={PACT: Pruning and Clustering-Based Token Reduction for Faster Visual Language Models}, 
+      author={Mohamed Dhouib and Davide Buscaldi and Sonia Vanier and Aymen Shabou},
+      year={2025},
+      eprint={2504.08966},
+      archivePrefix={arXiv},
+      primaryClass={cs.CV},
+      url={https://arxiv.org/abs/2504.08966}, 
+}
+
+
+## Acknowledgments
+
+This work received financial support from Crédit Agricole S.A. through the research chair with Ecole Polytechnique on Trustworthy and Responsible AI. 

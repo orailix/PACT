@@ -14,8 +14,8 @@ conda activate pactenv
 ##PACT
 export pact_config_path="configs/pact.json"
 export log_output_path="logs/pact_llavaonevision_7b"
-export cutoff=0.21 # This overrides config parameters at runtime — prevents the need for multiple config files for different hyperparameters
-export pruning_tokeep_percentage_value=0.55  # This overrides config parameters at runtime — prevents the need for multiple config files for different hyperparameters
+export cutoff=0.21 # This overrides config parameters at runtime, which prevents the need for multiple config files for different hyperparameters
+export pruning_tokeep_percentage_value=0.55  # This overrides config parameters at runtime, which prevents the need for multiple config files for different hyperparameters
 
 echo "Running PACT on dataset: $dataset_name"
 
@@ -33,7 +33,7 @@ python -m lmms_eval \
 #Runnig DBDPC
 export pact_config_path="configs/dbdpc.json"
 export log_output_path="logs/dbdpc_llavaonevision_7b"
-export cutoff=0.21 # This overrides config parameters at runtime — prevents the need for multiple config files for different hyperparameters
+export cutoff=0.21 # This overrides config parameters at runtime, which prevents the need for multiple config files for different hyperparameters
 
 echo "Running DBDPC on dataset: $dataset_name"
 
@@ -50,7 +50,7 @@ python -m lmms_eval \
 #Runnig EUTI
 export pact_config_path="configs/euti.json"
 export log_output_path="logs/euti_llavaonevision_7b"
-export pruning_tokeep_percentage_value=0.4 # This overrides config parameters at runtime — prevents the need for multiple config files for different hyperparameters
+export pruning_tokeep_percentage_value=0.4 # This overrides config parameters at runtime, which prevents the need for multiple config files for different hyperparameters
 
 echo "Running EUTI on dataset: $dataset_name"
 
@@ -69,7 +69,7 @@ python -m lmms_eval \
 #FastV
 export pact_config_path="configs/fastv.json"
 export log_output_path="logs/fastv_llavaonevision_7b"
-export pruning_tokeep_percentage_value=0.353 # This overrides config parameters at runtime — prevents the need for multiple config files for different hyperparameters
+export pruning_tokeep_percentage_value=0.353 # This overrides config parameters at runtime, which prevents the need for multiple config files for different hyperparameters
 
 echo "Running FastV on dataset: $dataset_name"
 
@@ -88,7 +88,7 @@ python -m lmms_eval \
 #TOME
 export pact_config_path="configs/tome.json"
 export log_output_path="logs/tome_llavaonevision_7b"
-export perc_tokeep_tome_total=0.353 # This overrides config parameters at runtime — prevents the need for multiple config files for different hyperparameters
+export perc_tokeep_tome_total=0.353 # This overrides config parameters at runtime, which prevents the need for multiple config files for different hyperparameters
  
 echo "Running TOME on dataset: $dataset_name"
 
@@ -106,7 +106,7 @@ python -m lmms_eval \
 #Vistal Token Withdrawel
 export pact_config_path="configs/vtw.json"
 export log_output_path="logs/vtw_llavaonevision_7b"
-export equivalent_reduc_percentage_vtw=0.353 # This overrides config parameters at runtime — prevents the need for multiple config files for different hyperparameters
+export equivalent_reduc_percentage_vtw=0.353 # This overrides config parameters at runtime, which prevents the need for multiple config files for different hyperparameters
 
 echo "Running VTW on dataset: $dataset_name"
 
@@ -123,7 +123,7 @@ python -m lmms_eval \
 #Runnig DPC
 export pact_config_path="configs/dpc.json"
 export log_output_path="logs/dpc_llavaonevision_7b"
-export percentage_to_keep_dpc=0.4 # This overrides config parameters at runtime — prevents the need for multiple config files for different hyperparameters
+export percentage_to_keep_dpc=0.4 # This overrides config parameters at runtime, which prevents the need for multiple config files for different hyperparameters
 
 echo "Running DPC on dataset: $dataset_name"
 
@@ -140,7 +140,7 @@ python -m lmms_eval \
 #K-means
 export pact_config_path="configs/kmeans.json"
 export log_output_path="logs/kmeans_llavaonevision_7b"
-export perc_tokeep_kmeans=0.4 # This overrides config parameters at runtime — prevents the need for multiple config files for different hyperparameters
+export perc_tokeep_kmeans=0.4 # This overrides config parameters at runtime, which prevents the need for multiple config files for different hyperparameters
 
 echo "Running K-means on dataset: $dataset_name"
 
@@ -160,7 +160,7 @@ python -m lmms_eval \
 #agglomerative clustering
 export pact_config_path="configs/agglomerative.json"
 export log_output_path="logs/agglomerative_llavaonevision_7b"
-export percentage_to_keep_agglomerative=0.4 # This overrides config parameters at runtime — prevents the need for multiple config files for different hyperparameters
+export percentage_to_keep_agglomerative=0.4 # This overrides config parameters at runtime, which prevents the need for multiple config files for different hyperparameters
 
 echo "Running  agglomerative clustering on dataset: $dataset_name"
 
@@ -178,7 +178,7 @@ python -m lmms_eval \
 #DBSCAN clustering
 export pact_config_path="configs/dbscan.json"
 export log_output_path="logs/DBSCAN_llavaonevision_7b"
-export eps_dbscan=0.7 # This overrides config parameters at runtime — prevents the need for multiple config files for different hyperparameters
+export eps_dbscan=0.7 # This overrides config parameters at runtime, which prevents the need for multiple config files for different hyperparameters
 
 echo "Running DBSCAN clustering on dataset: $dataset_name"
 

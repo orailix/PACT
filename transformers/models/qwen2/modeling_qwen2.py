@@ -63,7 +63,7 @@ _CONFIG_FOR_DOC = "Qwen2Config"
 
 
 
-def  get_key_query_value(hidden_states,decoder_layer,real_position_ids,get_only_k=False):
+def get_key_query_value(hidden_states, decoder_layer, real_position_ids, get_only_k=False):
     hidden_states_normalized = decoder_layer.input_layernorm(hidden_states)
     current_k = decoder_layer.self_attn.k_proj(hidden_states_normalized) 
     bsz, q_len, _ = current_k.size()
@@ -1033,7 +1033,8 @@ class Qwen2Model(Qwen2PreTrainedModel):
                             
                             if pact_config.use_custom_pruning  :
                                 scores=custom_pruning(current_k_image,current_q_image)
-
+                                if pact_config.use_all_non_text_pruning :
+                                    scores=scores[:,is_image[is_not_text]]
                             else :
                                 if pact_config.use_attention_in_token_pruning :
                                     #for fastv
@@ -1137,7 +1138,7 @@ class Qwen2Model(Qwen2PreTrainedModel):
                             if not pact_config.include_pruned_in_mean :
                                 merged,second_mask,weights,position_ids_after_reduction=custom_token_reduction(hidden_states[:,first_mask_global].squeeze(0), vector_to_use_in_distance_clustering[:,first_mask_global].squeeze(0), position_ids=real_position_ids[:,first_mask_global].squeeze(0), cutoff=pact_config.cutoff)
                             else :
-                                merged,second_mask,weights,position_ids_after_reduction=custom_token_reduction(hidden_states[:,first_mask_global].squeeze(0), vector_to_use_in_distance_clustering[:,first_mask_global].squeeze(0), position_ids=real_position_ids[:,first_mask_global].squeeze(0), cutoff=pact_config.cutoff,pruned_hiddens=hidden_states[:,is_image][:,~first_mask].squeeze(0),pruned_keys=vector_to_use_in_distance_clustering[:,is_image][:,~first_mask].squeeze(0))
+                                merged,second_mask,weights,position_ids_after_reduction=custom_token_reduction(hidden_states[:,first_mask_global].squeeze(0), vector_to_use_in_distance_clustering[:,first_mask_global].squeeze(0), position_ids=real_position_ids[:,first_mask_global].squeeze(0), cutoff=pact_config.cutoff,pruned_hiddens=hidden_states[:,is_image][:,~first_mask].squeeze(0),pruned_for_reduction=vector_to_use_in_distance_clustering[:,is_image][:,~first_mask].squeeze(0))
                             
                             
                             position_ids_after_reduction=position_ids_after_reduction.to(real_position_ids.dtype)

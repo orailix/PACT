@@ -19,8 +19,8 @@ export HF_HOME="$HOME/.cache/huggingface"  ##change this if necessary
 cd "$(dirname "$(pwd)")" || exit 1
 export pact_config_path="configs/pact.json"
 export log_output_path="logs/pact_llavaonevision_7b"
-export cutoff=0.21 # This overrides config parameters at runtime — prevents the need for multiple config files for different hyperparameters
-export pruning_tokeep_percentage_value=0.55  # This overrides config parameters at runtime — prevents the need for multiple config files for different hyperparameters
+export cutoff=0.21 # This overrides config parameters at runtime, which prevents the need for multiple config files for different hyperparameters
+export pruning_tokeep_percentage_value=0.55  # This overrides config parameters at runtime, which prevents the need for multiple config files for different hyperparameters
 conda activate pactenv
 
 # export HF_HOME="$HOME/.cache/huggingface" #change this if you have another directory

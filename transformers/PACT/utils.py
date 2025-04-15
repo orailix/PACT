@@ -581,17 +581,17 @@ def custom_token_reduction(image_feature, image_feature_for_reduction, position_
       
     - image_feature_for_reduction (Tensor, shape N, D'):  
       Vectors used in the token reduction process.
-      The specific vectors used can be configured via config.vector_to_use_in_distance_clustering.  
+      The specific vectors used can be configured via config.vector_to_use_in_distance_clustering  
       Default: Keys after the application of rotary embeddings.
 
     - position_ids (Tensor, shape N) or (Tensor, shape (N,1,3)) for Qwen2-VL:  
       The position IDs.
 
-    - pruned_hiddens (Tensor, shape N, D, optional):  
+    - pruned_hiddens (Tensor, shape N', D, optional):  
       If config.include_pruned_in_mean = True, this contains the hidden states of the pruned tokens, if a pruning step was done.
 
-    - pruned_for_reduction (Tensor, shape N, D', optional):  
-      If config.include_pruned_in_mean = True, this contains the same type of vectors as image_feature_for_reduction
+    - pruned_for_reduction (Tensor, shape N', D', optional):  
+      If config.include_pruned_in_mean = True, this contains the same type of vectors as image_feature_for_reduction 
       but for pruned tokens, so defalut is the Keys after the application of rotary embeddings of pruned vectors.
 
     - cutoff (float):  
@@ -609,17 +609,42 @@ def custom_token_reduction(image_feature, image_feature_for_reduction, position_
 
     - weights (Tensor, shape N):  
       Weights used for applying proportional attention.  
-      If proportional attention is disabled, this returns a vector of ones (default behavior).  
-      This behavior can be adjusted in the config.
+      If no_proportional_attention is set to True, this vector will not be used.
 
     Notes:
-    - If tokens are merged, one token must be selected as the representative, nd it's value should be repalced by  
-      the merged tokens resulting vector.  
+    - If tokens are merged, one token must be selected as the representative, and it's value should be replaced by  
+      the average of the tokens to be merged.  
     - The mask should mark this selected token as 1, while all other merged tokens should be 0.
-    - Only the following will be used in further processing:  
+    - Only the following will be used in further processing (which constitutes the reduced set of visual tokens):  
       image_feature[:, mask_image], weights[:, mask_image], position_ids_output[:, mask_image].
     """
+    ## this is just an exemple and must deleted
+    #the exemple is just merging each cutoff adjacent tokens ==> resulting number of tokens is  N//cutoff
 
+    N, D = image_feature.shape
+    cutoff = max(1, int(cutoff))
+
+    image_feature_output = torch.zeros_like(image_feature)
+    mask_image = torch.zeros(N, device=image_feature.device, dtype=image_feature.dtype).to(torch.bool)
+    weights = torch.zeros(N, device=image_feature.device, dtype=image_feature.dtype)
+
+
+    num_windows = N // cutoff
+
+    #this slows but it's just an exemple
+    for w in range(num_windows):
+        start_idx = w * cutoff
+        end_idx = start_idx + cutoff
+
+        merged = image_feature[start_idx:end_idx].mean(dim=0)
+
+        center_idx = start_idx + cutoff // 2
+        image_feature_output[center_idx] = merged
+        mask_image[center_idx] = 1
+        weights[center_idx] = cutoff
+
+    mask_image=mask_image.to(torch.bool)
+        
     return image_feature, mask_image, weights, position_ids
 
 def custom_pruning(k_image, q_image):
@@ -628,25 +653,25 @@ def custom_pruning(k_image, q_image):
 
     Inputs:
     - k_image (Tensor): 
-        Shape: (B, H_kq, N_k, D)
+        Shape: (B, H, N_k, D)
         The key tensor.
-        B = batch size  
-        H_kq = number of attention heads
+        B = batch size (set to one for evaluation reduction approaches) 
+        H = number of attention heads
         N_k = keys sequence length
         D = head dimension
     
     - q_image (Tensor): 
         the query tensor
-        Shape: (B, H_kq, N_q, D)
+        Shape: (B, H, N_q, D)
         The processed image query tensor.  
-        B = batch size  
-        H_q =  number of attention heads
+        B = batch size (set to one for evaluation reduction approaches) 
+        H =  number of attention heads
         N_q = query sequence length  
         D = head dimension
 
     Output:
     - scores (Tensor): 
-        Shape: (B, N_kv)
+        Shape: (B, N_k)
         Importance scores for each image key token, aggregated across heads and query positions.
         These scores will be used to prune the visual tokens.
 
@@ -657,8 +682,18 @@ def custom_pruning(k_image, q_image):
       Otherwise, N_k typically refers only to the visual tokens used for pruning.
     - Although pruning is applied only to visual tokens, including special tokens in the key tensor (K) can still be beneficial.
       For example, when using softmax-based scoring, special tokens may provide additional context that influences attention distribution.
+    - These scores will be used to prune only visual tokens. Special tokens, even if they contribute to the score calculation (and may have an associated score), will not be pruned.
     """
 
+    ### this is just an exemple and need to replaced
+    ### the score here for each token is the product between it's key and query (some sort of self consistency)
+
+    # (B, H, N_k, D) -> (B, H, N_k) (works only if N_k=N_q meaning pact_config.use_all_non_text_pruning is set to True
+    dot_product = (k_image * q_image).sum(dim=-1)
+
+    # Average across heads: (B, H, N_k) -> (B, N_k)
+    scores = dot_product.mean(dim=1)
+    
     return scores
 
 def bipartite_soft_matching(metric, r):

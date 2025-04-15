@@ -18,8 +18,8 @@ cd "$(dirname "$(pwd)")" || exit 1
 
 export pact_config_path="configs/pact.json"
 export log_output_path="logs/pact_Qwenvl2.0_7b"
-export cutoff=0.1 # This overrides config parameters at runtime — prevents the need for multiple config files for different hyperparameters
-export pruning_tokeep_percentage_value=0.8  # This overrides config parameters at runtime — prevents the need for multiple config files for different hyperparameters
+export cutoff=0.1 # This overrides config parameters at runtime, which prevents the need for multiple config files for different hyperparameters
+export pruning_tokeep_percentage_value=0.8  # This overrides config parameters at runtime, which prevents the need for multiple config files for different hyperparameters
 conda activate pactenv
 
 for dataset_name in "${dataset_name_list[@]}"; do
