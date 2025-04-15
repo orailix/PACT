@@ -48,7 +48,7 @@ bash pact_llava-onevision7b.sh
 [This script file](scripts/test_different_methods_llava-onevision7b.sh) demonstrates how to test all the different methods supported by our repository. Each method is defined by a config file, with different config files available in the [the configs folder](configs/).
 For documentation on config file parameters, refer to this [file](docs/CONFIGDOC.md).
 
-### 2. Testing New Methods (Custom)
+### 2. Testing Custom Reduction Methods
 
 You can also test a custom pruning or clustering-based reduction method or combine both by using:
 - [custom_clustering.json](configs/custom_clustering.json) for custom clustering based methods.
