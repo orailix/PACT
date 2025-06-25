@@ -1,6 +1,7 @@
 # PACT: Pruning and Clustering-Based Token Reduction for Faster Visual Language Models, CVPR 2025
 
-[![arXiv](https://img.shields.io/badge/arXiv-1234.56789-b31b1b.svg)](https://arxiv.org/abs/2504.08966)
+[![arXiv](https://img.shields.io/badge/arXiv-1234.56789-b31b1b.svg)](https://arxiv.org/abs/2504.08966)[![CVPR 2025](https://img.shields.io/badge/CVPR-2025-blue.svg)](https://openaccess.thecvf.com/content/CVPR2025/html/Dhouib_PACT_Pruning_and_Clustering-Based_Token_Reduction_for_Faster_Visual_Language_CVPR_2025_paper.html)
+
 
 ## PACT Performance
 
@@ -72,14 +73,12 @@ The visual token reduction is implemented by modifying [`llava_arch.py`](LLaVA-N
 If you find our work useful, please consider citing our paper:
 
 ```bibtex
-@misc{dhouib2025pactpruningclusteringbasedtoken,
-  title={PACT: Pruning and Clustering-Based Token Reduction for Faster Visual Language Models},
-  author={Mohamed Dhouib and Davide Buscaldi and Sonia Vanier and Aymen Shabou},
-  year={2025},
-  eprint={2504.08966},
-  archivePrefix={arXiv},
-  primaryClass={cs.CV},
-  url={https://arxiv.org/abs/2504.08966},
+@inproceedings{dhouib2025pact,
+  title={Pact: Pruning and clustering-based token reduction for faster visual language models},
+  author={Dhouib, Mohamed and Buscaldi, Davide and Vanier, Sonia and Shabou, Aymen},
+  booktitle={Proceedings of the Computer Vision and Pattern Recognition Conference},
+  pages={14582--14592},
+  year={2025}
 }
 ```
 
