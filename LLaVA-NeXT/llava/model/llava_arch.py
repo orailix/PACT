@@ -17,7 +17,6 @@ from abc import ABC, abstractmethod
 import time
 import math
 import re
-import time
 import torch
 import torch.nn as nn
 from .multimodal_encoder.builder import build_vision_tower
@@ -282,7 +281,13 @@ class LlavaMetaForCausalLM(ABC):
     
     def prepare_inputs_labels_for_multimodal(self, input_ids, position_ids, attention_mask, past_key_values, labels, images, modalities=["image"], image_sizes=None):
         
-       
+        # ──────────────────────────────────────────────────────────────────────────
+        # MODIFICATION: we create a binary “visual‐token” mask. We mirror how the embeddings are created and create progressivly the mask following the same logic and associating one to visual tokens.
+        #   • 1 for each visual token, 0 for text/special tokens
+        #   • concatenated to position_ids
+        #   • later unpacked in modeling_qwen2.py to distinguish visual vs text/special tokens
+        # ──────────────────────────────────────────────────────────────────────────
+
         vision_tower = self.get_vision_tower()
         # rank_print(modalities)
 
@@ -334,13 +339,13 @@ class LlavaMetaForCausalLM(ABC):
             mm_newline_position = getattr(self.config, "mm_newline_position", "one_token")
 
             if mm_patch_merge_type == "flat":
-                assert True==False
                 image_features = [x.flatten(0, 1) for x in image_features]
 
             elif mm_patch_merge_type.startswith("spatial"):
                 new_image_features = []
                 
-                new_mask_=[]
+                new_mask_=[] #A list that will indicate the position of visual tokens
+                # It will conatin mask_image, which is one for visual tokens and zero otherwise (even for special tokens)
                 for image_idx, image_feature in enumerate(image_features):
                     # FIXME: now assume the image is square, and split to 2x2 patches
                     # num_patches = h * w, where h = w = sqrt(num_patches)
@@ -350,7 +355,7 @@ class LlavaMetaForCausalLM(ABC):
                     if image_idx in video_idx_in_batch:  # video operations
                         # rank0_print("Video")
                         if mm_newline_position == "grid":
-                            assert True==False
+                            raise NotImplementedError("Only Llava One Vision is supported by this repo")
                             # Grid-wise
                             image_feature = self.add_token_per_grid(image_feature)
                             if self.config.add_faster_video:
@@ -369,7 +374,7 @@ class LlavaMetaForCausalLM(ABC):
                         
                             new_image_features.append(image_feature)
                         elif mm_newline_position == "frame":
-                            assert True==False
+                            raise NotImplementedError("Only Llava One Vision is supported by this repo")
                             # Frame-wise
                             image_feature = self.add_token_per_frame(image_feature)
 
@@ -400,7 +405,7 @@ class LlavaMetaForCausalLM(ABC):
                             new_mask_.append(mask_image) 
 
                         elif mm_newline_position == "no_token":
-                            assert True==False
+                            raise NotImplementedError("Only Llava One Vision is supported by this repo")
                             new_image_features.append(image_feature.flatten(0, 1))
                         else:
                             raise ValueError(f"Unexpected mm_newline_position: {mm_newline_position}")
@@ -433,7 +438,7 @@ class LlavaMetaForCausalLM(ABC):
                             image_feature = image_feature.view(2, 2, height, width, -1)
 
                         if "maxpool2x2" in mm_patch_merge_type:
-                            assert True==False
+                            raise NotImplementedError("Only Llava One Vision is supported by this repo")
                             image_feature = image_feature.permute(4, 0, 2, 1, 3).contiguous()
                             image_feature = image_feature.flatten(1, 2).flatten(2, 3)
                             image_feature = nn.functional.max_pool2d(image_feature, 2)
@@ -484,7 +489,6 @@ class LlavaMetaForCausalLM(ABC):
 
                            
                         else:
-                            assert True==False
                             image_feature = image_feature.permute(0, 2, 1, 3, 4).contiguous()
                             image_feature = image_feature.flatten(0, 3)
                         if "nobase" in mm_patch_merge_type:
@@ -656,11 +660,9 @@ class LlavaMetaForCausalLM(ABC):
         
         new_input_embeds = torch.stack(new_input_embeds_padded, dim=0)
 
-        new_mask_ = torch.stack(new_mask_, dim=0)
+        mask = torch.stack(new_mask_, dim=0)
         
-        # rank0_print("tokenizer padding")
-
-        mask=new_mask_
+   
 
         if _labels is None:
             new_labels = None
@@ -676,7 +678,8 @@ class LlavaMetaForCausalLM(ABC):
             position_ids = None
         if getattr(self.config, "use_pos_skipping", False) and self.training:
 
-            assert True==False, "clustering not implemented for training"
+            raise NotImplementedError("PACT is not implemented for training.")
+
             position_ids = torch.arange(new_input_embeds.size(1), device=new_input_embeds.device).unsqueeze(0).to(new_input_embeds.device)
             split_position = random.randint(0, new_input_embeds.size(1))
             left_add = random.randint(0, self.config.pos_skipping_range)
@@ -691,10 +694,12 @@ class LlavaMetaForCausalLM(ABC):
                     0, new_input_embeds.shape[1], dtype=torch.long, device=new_input_embeds.device
                 ).unsqueeze(1).unsqueeze(0)
             
-            mask=torch.tensor(mask, dtype=torch.bool).squeeze().unsqueeze(1).unsqueeze(0)
+            mask=torch.tensor(mask, dtype=torch.bool).squeeze().unsqueeze(1).unsqueeze(0) 
+            #Batch size is always set to one for inference, so this line gives a tensor with the same diemnsion as position_ids.
+            #note that '.squeeze().unsqueeze(1).unsqueeze(0)' is uncesserary, we do it only to mirror how positions_ids are created
             
             self.max_position=torch.max(position_ids).item()
-            # mask=mask[:,mask.shape[1]-position_ids.shape[1]:]
+
             position_ids=torch.cat((position_ids,mask),dim=-1)
         else :
             position_ids = torch.arange(
