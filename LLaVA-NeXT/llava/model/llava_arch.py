@@ -339,6 +339,7 @@ class LlavaMetaForCausalLM(ABC):
             mm_newline_position = getattr(self.config, "mm_newline_position", "one_token")
 
             if mm_patch_merge_type == "flat":
+                raise NotImplementedError("Only Llava One Vision is supported by this repo")
                 image_features = [x.flatten(0, 1) for x in image_features]
 
             elif mm_patch_merge_type.startswith("spatial"):
@@ -489,6 +490,7 @@ class LlavaMetaForCausalLM(ABC):
 
                            
                         else:
+                            raise NotImplementedError("Only Llava One Vision is supported by this repo")
                             image_feature = image_feature.permute(0, 2, 1, 3, 4).contiguous()
                             image_feature = image_feature.flatten(0, 3)
                         if "nobase" in mm_patch_merge_type:
