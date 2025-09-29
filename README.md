@@ -73,12 +73,13 @@ The visual token reduction is implemented by modifying [`llava_arch.py`](LLaVA-N
 If you find our work useful, please consider citing our paper:
 
 ```bibtex
-@inproceedings{dhouib2025pact,
-  title={Pact: Pruning and clustering-based token reduction for faster visual language models},
-  author={Dhouib, Mohamed and Buscaldi, Davide and Vanier, Sonia and Shabou, Aymen},
-  booktitle={Proceedings of the Computer Vision and Pattern Recognition Conference},
-  pages={14582--14592},
-  year={2025}
+@InProceedings{Dhouib_2025_CVPR,
+    author    = {Dhouib, Mohamed and Buscaldi, Davide and Vanier, Sonia and Shabou, Aymen},
+    title     = {PACT: Pruning and Clustering-Based Token Reduction for Faster Visual Language Models},
+    booktitle = {Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR)},
+    month     = {June},
+    year      = {2025},
+    pages     = {14582-14592}
 }
 ```
 
