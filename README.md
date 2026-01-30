@@ -1,6 +1,7 @@
 # PACT: Pruning and Clustering-Based Token Reduction for Faster Visual Language Models, CVPR 2025
 
 [![arXiv](https://img.shields.io/badge/arXiv-1234.56789-b31b1b.svg)](https://arxiv.org/abs/2504.08966)[![CVPR 2025](https://img.shields.io/badge/CVPR-2025-blue.svg)](https://openaccess.thecvf.com/content/CVPR2025/html/Dhouib_PACT_Pruning_and_Clustering-Based_Token_Reduction_for_Faster_Visual_Language_CVPR_2025_paper.html)
+
 **Keywords:** Vision-Language Models (VLMs); inference-time visual token reduction; token reduction; token pruning; token clustering and token merging; FlashAttention-compatible token reduction; positional-bias mitigation in token pruning
 
 
